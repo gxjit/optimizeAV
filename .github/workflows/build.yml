@@ -41,3 +41,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.dist_dir }}/*.zip
+        permissions:
+          contents: write
