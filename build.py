@@ -1,10 +1,11 @@
 from argparse import ArgumentParser
-from subprocess import run
 from functools import partial
-from shutil import make_archive
+from os import environ
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from platform import machine, system
+from shutil import make_archive
+from subprocess import run
+from tempfile import TemporaryDirectory
 
 
 def parseArgs():
