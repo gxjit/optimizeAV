@@ -11,6 +11,9 @@ env:
 
 jobs:
   Build-Upload-Release:
+    permissions:
+      contents: write
+
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -41,5 +44,3 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.dist_dir }}/*.zip
-        permissions:
-          contents: write
