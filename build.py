@@ -50,9 +50,10 @@ if system() == "Linux":
         aptDeps = "upx"
         runP(f"sudo apt-get install -y {aptDeps}")
 
-# if system() == "Windows":
-#     if pargs.pyinst:
-#         runP("choco install upx")
+if system() == "Windows":
+    if which("choco"):
+        if pargs.pyinst:
+            runP("choco install upx")
 
 if pargs.pyinst:
     pipDeps = "pyinstaller"
