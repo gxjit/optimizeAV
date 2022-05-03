@@ -36,8 +36,10 @@ tempRoot = Path(td.name)
 buildPath = tempRoot.joinpath("build")
 tempPath = tempRoot.joinpath("tmp")
 distDir = (
-    Path(environ.get("dist_dir")) if environ.get("dist_dir") else rootPath
-).joinpath("dist")
+    Path(environ.get("dist_dir"))
+    if environ.get("dist_dir")
+    else rootPath.joinpath("dist")
+)
 zipPath = distDir.joinpath(f"{appEntry.stem}_{platformStr}").with_suffix(".zip")
 
 runP = partial(run, shell=True, check=True)
