@@ -1,0 +1,43 @@
+name: Build
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  repo: ${{ github.event.repository.name }}
+  ref: ${{ github.ref_name }}
+
+jobs:
+  Build-Upload-Release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        vers: ['-pi', '-pi -o', '-n', '-n -o']
+
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - uses: actions/checkout@v3
+      - name: Build All
+        run: |
+          python ${{ github.workspace }}/build.py ${{ matrix.vers }}
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.repo }}-${{ env.ref }}
+          path: |
+            ${{ github.workspace }}/dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ github.workspace }}/dist/*.zip
