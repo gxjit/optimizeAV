@@ -50,8 +50,8 @@ if system() == "Linux":
         aptDeps = "upx"
         runP(f"sudo apt-get install -y {aptDeps}")
 
-# if pargs.pyinst:
-#     if system() == "Windows":
+# if system() == "Windows":
+#     if pargs.pyinst:
 #         runP("choco install upx")
 
 if pargs.pyinst:
@@ -88,7 +88,8 @@ if pargs.nuitka and not pargs.onefile:
         buildPath.joinpath(f"{appEntry.stem}")
     )
 
-distDir.mkdir()
+if not distDir.exists():
+    distDir.mkdir()
 
 make_archive(zipPath.with_suffix(""), "zip", buildPath)
 
