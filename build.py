@@ -35,9 +35,9 @@ td = TemporaryDirectory(ignore_cleanup_errors=False)
 tempRoot = Path(td.name)
 buildPath = tempRoot.joinpath("build")
 tempPath = tempRoot.joinpath("tmp")
-distDir = (Path(environ("dist_dir")) if environ("dist_dir") else rootPath).joinpath(
-    "dist"
-)
+distDir = (
+    Path(environ.get("dist_dir")) if environ.get("dist_dir") else rootPath
+).joinpath("dist")
 zipPath = distDir.joinpath(f"{appEntry.stem}_{platformStr}").with_suffix(".zip")
 
 runP = partial(run, shell=True, check=True)
