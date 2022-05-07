@@ -14,20 +14,39 @@ def parseArgs():
     buildSelect.add_argument("-pi", "--pyinst", action="store_true")
     buildSelect.add_argument("-n", "--nuitka", action="store_true")
     parser.add_argument("-o", "--onefile", action="store_true")
+    parser.add_argument("-d", "--deps", action="store_true")
 
     return parser.parse_args()
 
 
 pargs = parseArgs()
 
-platformStr = f"{system()}_{machine()}".lower()
+runP = partial(run, shell=True, check=True)
 
-if pargs.nuitka:
-    platformStr = f"n_{platformStr}"
+# Install deps
 
-if pargs.onefile:
-    platformStr = f"o_{platformStr}"
+if system() == "Linux":
+    if which("apt-get"):
+        if pargs.pyinst:
+            aptDeps = "python3 python-is-python3 pip upx"
+            runP(f"apt-get install -y {aptDeps}")
 
+if system() == "Windows":
+    if which("choco"):
+        if pargs.pyinst:
+            runP("choco install upx")
+
+if pargs.pyinst:
+    pipDeps = "pyinstaller"
+elif pargs.nuitka:
+    pipDeps = "nuitka zstandard"
+
+runP(f"python -m pip install -U --user {pipDeps}")
+
+if pargs.deps:
+    exit()
+
+# Build Setup
 
 rootPath = Path.cwd()
 appEntry = rootPath.joinpath("optimizeAV.py")
@@ -40,31 +59,20 @@ distDir = (
     if environ.get("dist_dir")
     else rootPath.joinpath("dist")
 )
+
+platformStr = f"{system()}_{machine()}".lower()
+
+if pargs.nuitka:
+    platformStr = f"n_{platformStr}"
+
+if pargs.onefile:
+    platformStr = f"o_{platformStr}"
+
 zipPath = distDir.joinpath(f"{appEntry.stem}_{platformStr}").with_suffix(".zip")
-
-runP = partial(run, shell=True, check=True)
-
-
-if system() == "Linux":
-    if pargs.pyinst:
-        aptDeps = "upx"
-        runP(f"sudo apt-get install -y {aptDeps}")
-
-if system() == "Windows":
-    if which("choco"):
-        if pargs.pyinst:
-            runP("choco install upx")
-
-if pargs.pyinst:
-    pipDeps = "pyinstaller"
-elif pargs.nuitka:
-    pipDeps = "nuitka zstandard"
-
-runP(f"pip install -U --user {pipDeps}")
 
 if pargs.pyinst:
     cmd = (
-        f"pyinstaller -y --distpath {buildPath} --workpath {tempPath} "
+        f"python -m PyInstaller -y --distpath {buildPath} --workpath {tempPath} "
         f"--specpath {tempPath} --clean --onedir {appEntry}"
     )
 elif pargs.nuitka:
@@ -82,6 +90,8 @@ elif pargs.onefile and pargs.nuitka:
 if zipPath.exists():
     zipPath.unlink()
 
+# Build
+
 runP(cmd)
 
 if pargs.nuitka and not pargs.onefile:
@@ -97,3 +107,5 @@ make_archive(zipPath.with_suffix(""), "zip", buildPath)
 td.cleanup()
 
 # build log
+# 7zip compression?
+# sudo?
