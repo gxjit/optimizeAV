@@ -120,7 +120,7 @@ noVideo = True if pargs.cVideo == "vn" else False
 
 if noVideo:
 
-    formats = [".flac", ".wav", ".m4a", ".mp3", ".mp4"]
+    formats = [".flac", ".wav", ".m4a", ".mp3"]
 
     outExt = ".opus" if pargs.cAudio == "opus" else ".m4a"
 else:
