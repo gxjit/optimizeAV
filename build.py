@@ -29,7 +29,7 @@ if system() == "Linux":
     if which("apt-get"):
         if pargs.pyinst:
             aptDeps = "python3 python-is-python3 pip upx"
-            runP(f"apt-get install -y {aptDeps}")
+            runP(f"sudo apt-get install -y {aptDeps}")
 
 if system() == "Windows":
     if which("choco"):
