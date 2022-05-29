@@ -292,8 +292,8 @@ for idx, file in enumerate(fileList):
     else:
         waitN(int(dynWait(timeTaken)))
 
-def exe():
-    pass
+# def exe():
+#     pass
 
 # H264(x264): medium efficiency, fast encoding, widespread support
 # > H265(x265): high efficiency, slow encoding, medicore support
