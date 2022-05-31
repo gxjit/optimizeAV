@@ -7,6 +7,7 @@ from shutil import make_archive, which
 from subprocess import run
 from tempfile import TemporaryDirectory
 
+# TODO: add zipapp build
 
 def parseArgs():
     parser = ArgumentParser()
@@ -50,7 +51,7 @@ if pargs.deps:
 
 rootPath = Path.cwd()
 appEntry = rootPath.joinpath("optimizeAV.py")
-td = TemporaryDirectory(ignore_cleanup_errors=False)
+td = TemporaryDirectory(ignore_cleanup_errors=True)
 tempRoot = Path(td.name)
 buildPath = tempRoot.joinpath("build")
 tempPath = tempRoot.joinpath("tmp")
@@ -108,4 +109,4 @@ td.cleanup()
 
 # build log
 # 7zip compression?
-# sudo?
+# sudo in docker?

@@ -7,6 +7,8 @@ from statistics import fmean
 from sys import version_info
 from time import time
 
+# from os import cpu_count
+
 from modules.ffUtils.ffmpeg import getffmpegCmd, optsVideo, selectCodec
 from modules.ffUtils.ffprobe import compareDur, formatParams, getMeta, getMetaData
 from modules.fs import cleanUp, getFileList, getFileListRec, makeTargetDirs
@@ -104,6 +106,14 @@ def parseArgs():
         type=int,
         help="Audio Quality/bitrate in kbps; (defaults:: opus: 48, he: 56 and aac: 72)",
     )
+    # parser.add_argument(
+    #     "-j",
+    #     "--jobs",
+    #     default=cpu_count(),
+    #     type=int,
+    #     help="Number of jobs to be run in parallel by encoder for Multi-Processing. "
+    #     "(Default: Number of logical cores available) (Only supported by Video Encoders)",
+    # )
     return parser.parse_args()
 
 
