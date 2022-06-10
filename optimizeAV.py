@@ -159,7 +159,7 @@ if not fileList:
 
 outDir = makeTargetDirs(dirPath, [f"out-{outExt[1:]}"])[0]
 tmpFile = outDir.joinpath(f"tmp-{fileDTime()}{outExt}")
-setLogFile(outDir.joinpath(f"{dirPath.stem}.log"))
+setLogFile(outDir.joinpath(f"{dirPath.name}.log"))
 
 if pargs.recursive:
     if version_info >= (3, 9):
