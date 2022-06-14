@@ -163,6 +163,9 @@ if pargs.onefile:
         cmd = cmd.replace("--onedir", "--onefile")
     elif pargs.nuitka:
         cmd = cmd.replace("--standalone", "--onefile")
+
+if pargs.onefile or pargs.python:
+    if pargs.nuitka:
         exePath = buildPath / f"{appEntry.stem}{sfx}"
         cmd = f'{cmd} -o "{exePath}"'
 
