@@ -187,7 +187,7 @@ if len(take(1, buildPath.iterdir())) < 1:
     print("Build directory is empty.")
     exit(1)
 
-if pargs.nuitka and not pargs.onefile:
+if pargs.nuitka and not (pargs.onefile or pargs.python):
     nPath = head(buildPath.glob("*.dist"))
     nPath = nPath.rename(buildPath / f"{appEntry.stem}")
 
