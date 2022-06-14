@@ -302,13 +302,13 @@ for idx, file in enumerate(fileList):
     else:
         waitN(int(dynWait(timeTaken)))
 
-# def exe():
-#     pass
+def exe():
+    pass
 
 # H264(x264): medium efficiency, fast encoding, widespread support
 # > H265(x265): high efficiency, slow encoding, medicore support
 # > VP9(libvpx): high efficiency, slower encoding, less support than h265,
-# very little support on apple stuff
+# little to no support on apple stuff
 # > AV1(svt-av1): higher efficiency, slow encoding, little to no support,
 # encoders/decoders are not stable/established enough yet
 # libopus > fdk_aac SBR > fdk_aac >= vorbis > libmp3lame > ffmpeg aac
