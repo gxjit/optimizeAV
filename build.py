@@ -1,14 +1,16 @@
 from argparse import ArgumentParser
-from functools import partial
+
+# from functools import partial
 from itertools import islice
 from os import environ
 from pathlib import Path
 from platform import machine, system
 from shlex import split
-from shutil import make_archive, which
+from shutil import make_archive, which, copytree
 from subprocess import run as r
 from sys import version_info
 from tempfile import TemporaryDirectory
+from zipapp import create_archive as zipapp
 
 
 def parseArgs():
@@ -56,8 +58,6 @@ def head(itr):
     return list(islice(itr, 1))[0]
 
 
-# run = partial(run, check=True)
-
 run = lambda c: r(split(c), check=True)
 
 
@@ -73,12 +73,46 @@ def mkdirNotExists(pth: Path):
         pth.mkdir()
 
 
+acceptedExts = (".py", ".pyc")
+
+
+def zipFilter(pth: Path):
+    if pth.suffix in acceptedExts:
+        if not any(
+            [(p.name.startswith("_") or p.name.startswith(".")) for p in pth.parents]
+        ):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def copyFilter(pth, names):
+    """Returns a list of files to ignore"""
+    pth = Path(pth)
+    if pth.is_dir():
+        if pth.name.startswith("_") or pth.name.startswith("."):
+            return [str(p.relative_to(pth)) for p in pth.glob("*")]
+        else:
+            return [
+                str(f.relative_to(pth))
+                for f in pth.glob("*.*")
+                if f.suffix not in acceptedExts
+            ]
+    else:
+        []
+
+
 # Install deps
 
 if system() == "Linux":
     if which("apt-get"):
         if pargs.pyinst:
-            aptDeps = f'{addNotWhich("python3")} {addNotWhich("python-is-python3", "python")} {addNotWhich("upx")}'
+            aptDeps = (
+                f'{addNotWhich("python3")} {addNotWhich("python-is-python3", "python")}'
+                f' {addNotWhich("upx")}'
+            )
             run(f"sudo apt-get install -y {aptDeps}")
 
 elif system() == "Windows":
@@ -108,17 +142,15 @@ if pargs.deps:
 
 # Build Setup
 
-rootPath = Path.cwd()
-appEntry = rootPath.joinpath("optimizeAV.py")  # Entry point
-entryFunc = "optimizeAV:exe"  # mod:fn / pkg.mod:fn
+distRoot = Path.cwd()
 td = TemporaryDirectory(ignore_cleanup_errors=True)
-tempRoot = Path(td.name)
-buildPath = tempRoot.joinpath("build")
-tempPath = tempRoot.joinpath("tmp")
+buildRoot = Path(td.name)
+appEntry = buildRoot / "optimizeAV.py"  # Entry point
+entryFunc = "optimizeAV:exe"  # mod:fn / pkg.mod:fn
+buildPath = buildRoot / "build"
+tempPath = buildRoot / "tmp"
 distDir = (
-    Path(environ.get("dist_dir"))
-    if environ.get("dist_dir")
-    else rootPath.joinpath("dist")
+    Path(environ.get("dist_dir")) if environ.get("dist_dir") else distRoot / "dist"
 )
 
 platformStr = f"{system()}_{machine()}".lower()
@@ -137,7 +169,7 @@ if pargs.onefile:
     platformStr = f"onefile_{platformStr}"
 
 
-zipPath = distDir.joinpath(f"{appEntry.stem}_{platformStr}").with_suffix(".zip")
+zipPath = (distDir / f"{appEntry.stem}_{platformStr}").with_suffix(".zip")
 
 sfx = ".exe" if system() == "Windows" else ""
 
@@ -147,41 +179,49 @@ if pargs.pyinst:
         f'--distpath "{buildPath}" --workpath "{tempPath}" '
         f'--specpath "{tempPath}" --clean --onedir "{appEntry}"'
     )
+    if pargs.onefile:
+        cmd = cmd.replace("--onedir", "--onefile")
+
 elif pargs.nuitka:
     cmd = (
         "python -m nuitka --standalone --assume-yes-for-downloads "
         f'--output-dir="{buildPath}" --remove-output "{appEntry}"'
     )
-elif pargs.zipapp:
-    cmd = (
-        f'python -m zipapp "{rootPath}" '
-        f'-o "{buildPath / appEntry.stem}.pyz" -m {entryFunc}'
-    )
-
-if pargs.onefile:
-    if pargs.pyinst:
-        cmd = cmd.replace("--onedir", "--onefile")
-    elif pargs.nuitka:
+    if pargs.onefile:
         cmd = cmd.replace("--standalone", "--onefile")
-
-if pargs.onefile or pargs.python:
-    if pargs.nuitka:
+    if pargs.python:
+        cmd = cmd.replace("--standalone", "")
+    if pargs.onefile or pargs.python:
         exePath = buildPath / f"{appEntry.stem}{sfx}"
         cmd = f'{cmd} -o "{exePath}"'
 
-if pargs.python:
-    if pargs.nuitka:
-        cmd = cmd.replace("--standalone", "")
+elif pargs.zipapp:
+    # cmd = (
+    #     f'python -m zipapp "{buildRoot}" '
+    #     f'-o "{buildPath / appEntry.stem}.pyz" -m {entryFunc}'
+    # )
+    build = lambda: zipapp(
+        buildRoot,
+        (buildPath / appEntry.stem).with_suffix(".pyz"),
+        main=entryFunc,
+        filter=zipFilter,
+    )
+
 
 if zipPath.exists():
     zipPath.unlink()
 
 # Build
 
+copytree(Path.cwd(), buildRoot, dirs_exist_ok=True, ignore=copyFilter)
+
 for d in [distDir, buildPath, tempPath]:
     mkdirNotExists(d)
 
-run(cmd)
+if pargs.zipapp:
+    build()
+else:
+    run(cmd)
 
 if len(take(1, buildPath.iterdir())) < 1:
     print("Build directory is empty.")
