@@ -263,10 +263,10 @@ for idx, file in enumerate(fileList):
         f"\nAudio Output:: {formatParams(adoOutParams)}"
     )
 
-    if pargs.format:
+    getFormatDataIn = partial(getFormatData, metaDataIn)
+    getFormatDataOut = partial(getFormatData, metaDataOut)
 
-        getFormatDataIn = partial(getFormatData, metaDataIn)
-        getFormatDataOut = partial(getFormatData, metaDataOut)
+    if pargs.format:
 
         compareDur(getFormatDataIn("duration"), getFormatDataOut("duration"), "format")
 
@@ -284,9 +284,11 @@ for idx, file in enumerate(fileList):
             adoInParams["codec_type"],
         )
 
+    length = float(
+        adoInParams["duration"] if not pargs.format else getFormatDataIn("duration")
+    )
     inSize = file.stat().st_size
     outSize = outFile.stat().st_size
-    length = float(adoInParams["duration"])
     inSizes.append(inSize)
     outSizes.append(outSize)
     lengths.append(length)
