@@ -1,17 +1,16 @@
 from argparse import ArgumentParser
-
-# from functools import partial
 from itertools import islice
 from os import environ
 from pathlib import Path
 from platform import machine, system
 from shlex import split
-from shutil import make_archive, which, copytree
+from shutil import copytree, make_archive, which
 from subprocess import run as r
 from sys import version_info
 from tempfile import TemporaryDirectory
 from zipapp import create_archive as zipapp
 
+# from functools import partial
 
 def parseArgs():
     parser = ArgumentParser()
@@ -75,6 +74,7 @@ def mkdirNotExists(pth: Path):
 
 acceptedExts = (".py", ".pyc")
 
+# Keep License file?
 
 def zipFilter(pth: Path):
     if pth.suffix in acceptedExts:
@@ -158,7 +158,7 @@ platformStr = f"{system()}_{machine()}".lower()
 if pargs.python:
     vmj, vmi, *_ = version_info
     if pargs.zipapp:
-        platformStr = f"py{vmj}{vmi}"
+        platformStr = f"py{vmj}{vmi}" # pyz
     else:
         platformStr = f"py{vmj}{vmi}_{platformStr}"
 
@@ -242,3 +242,5 @@ td.cleanup()
 # build log
 # 7zip compression?
 # sudo in docker?
+# PYINSTALLER_COMPILE_BOOTLOADER
+# sudo apt-get install build-essential zlib1g-dev choco install -y  visualstudio2019-workload-vctools

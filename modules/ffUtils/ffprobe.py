@@ -75,6 +75,10 @@ def getMeta(metaData, meta, cdcType):
     return filterMeta(metaData, cdcType, meta["basic"], meta[cdcType])
 
 
+def getFormatData(meta, key):
+    return meta["format"][key]
+
+
 def getTags(metaData, tags):
     js = metaData["format"]["tags"]
     return [js.get(tag, "") for tag in tags]

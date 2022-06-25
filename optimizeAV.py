@@ -10,7 +10,13 @@ from time import time
 # from os import cpu_count
 
 from modules.ffUtils.ffmpeg import getffmpegCmd, optsVideo, selectCodec
-from modules.ffUtils.ffprobe import compareDur, formatParams, getMeta, getMetaData
+from modules.ffUtils.ffprobe import (
+    compareDur,
+    formatParams,
+    getMeta,
+    getMetaData,
+    getFormatData,
+)
 from modules.fs import cleanUp, getFileList, getFileListRec, makeTargetDirs
 from modules.helpers import (
     bytesToMB,
@@ -34,9 +40,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(
         description="Optimize Video/Audio files by encoding to avc/hevc/aac/opus."
     )
-    parser.add_argument(
-        "-d", "--dir", required=True, help="Directory path", type=checkDirPath
-    )
+    parser.add_argument("dir", help="Directory path.", type=checkDirPath)
     parser.add_argument(
         "-r",
         "--recursive",
@@ -106,13 +110,20 @@ def parseArgs():
         type=int,
         help="Audio Quality/bitrate in kbps; (defaults:: opus: 48, he: 56 and aac: 72)",
     )
+    parser.add_argument(
+        "-fm",
+        "--format",
+        action="store_true",
+        help="Use metadata from container format for duration comparison.",
+    )
     # parser.add_argument(
     #     "-j",
     #     "--jobs",
     #     default=cpu_count(),
     #     type=int,
     #     help="Number of jobs to be run in parallel by encoder for Multi-Processing. "
-    #     "(Default: Number of logical cores available) (Only supported by Video Encoders)",
+    #     "(Default: Number of logical cores available)"
+    #     "(Only supported by Video Encoders)",
     # )
     return parser.parse_args()
 
@@ -135,7 +146,7 @@ if noVideo:
     outExt = ".opus" if pargs.cAudio == "opus" else ".m4a"
 else:
 
-    formats = [".mp4", ".mov", ".mkv", ".avi"]
+    formats = [".mp4", ".mov", ".mkv", ".webm", ".avi", ".wmv", ".flv", ".3gp"]
 
     outExt = ".mp4"
 
@@ -189,12 +200,12 @@ for idx, file in enumerate(fileList):
 
     statusInfoP("Processing")
 
-    metaData = getMetaDataP(file)
-    if isinstance(metaData, Exception):
-        reportErr(metaData)
+    metaDataIn = getMetaDataP(file)
+    if isinstance(metaDataIn, Exception):
+        reportErr(metaDataIn)
         break
 
-    getMetaP = partial(getMeta, metaData, meta)
+    getMetaP = partial(getMeta, metaDataIn, meta)
 
     adoInParams = getMetaP("audio")
 
@@ -229,12 +240,12 @@ for idx, file in enumerate(fileList):
 
     statusInfoP("Processed")
 
-    metaData = getMetaDataP(outFile)
-    if isinstance(metaData, Exception):
-        reportErr(metaData)
+    metaDataOut = getMetaDataP(outFile)
+    if isinstance(metaDataOut, Exception):
+        reportErr(metaDataOut)
         break
 
-    getMetaP = partial(getMeta, metaData, meta)
+    getMetaP = partial(getMeta, metaDataOut, meta)
 
     if not noVideo:
 
@@ -245,12 +256,6 @@ for idx, file in enumerate(fileList):
             f"\nVideo Output:: {formatParams(vdoOutParams)}"
         )
 
-        compareDur(
-            vdoInParams["duration"],
-            vdoOutParams["duration"],
-            vdoInParams["codec_type"],
-        )
-
     adoOutParams = getMetaP("audio")
 
     printNLog(
@@ -258,11 +263,26 @@ for idx, file in enumerate(fileList):
         f"\nAudio Output:: {formatParams(adoOutParams)}"
     )
 
-    compareDur(
-        adoInParams["duration"],
-        adoOutParams["duration"],
-        adoInParams["codec_type"],
-    )
+    if pargs.format:
+
+        getFormatDataIn = partial(getFormatData, metaDataIn)
+        getFormatDataOut = partial(getFormatData, metaDataOut)
+
+        compareDur(getFormatDataIn("duration"), getFormatDataOut("duration"), "format")
+
+    else:
+
+        compareDur(
+            vdoInParams["duration"],
+            vdoOutParams["duration"],
+            vdoInParams["codec_type"],
+        )
+
+        compareDur(
+            adoInParams["duration"],
+            adoOutParams["duration"],
+            adoInParams["codec_type"],
+        )
 
     inSize = file.stat().st_size
     outSize = outFile.stat().st_size
@@ -302,8 +322,10 @@ for idx, file in enumerate(fileList):
     else:
         waitN(int(dynWait(timeTaken)))
 
+
 def exe():
     pass
+
 
 # H264(x264): medium efficiency, fast encoding, widespread support
 # > H265(x265): high efficiency, slow encoding, medicore support
